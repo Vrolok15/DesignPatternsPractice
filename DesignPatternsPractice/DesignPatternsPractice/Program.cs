@@ -4,84 +4,42 @@ using System.Text;
 
 namespace DesignPatternsPractice
 {
-    public class CodeElement
+    public enum CoordinateSystem
     {
-        public string Value;
-        public string Type;
-        public List<CodeElement> Elements = new List<CodeElement>();
-        private const int IndentSize = 2;
+        Cartesian,
+        Polar
+    }
 
-        public CodeElement()
+    public class Point
+    {
+        private double x, y;
+
+        // Need to know what "a" and "b" is, need to specify Coordinate System if not Cartesian
+        public Point(double a, double b, 
+            CoordinateSystem system =  CoordinateSystem.Cartesian)
         {
-
-        }
-
-        public CodeElement(string value, string type)
-        {
-            Value = value ?? throw new ArgumentNullException(paramName: nameof(value));
-            Type = type ?? throw new ArgumentNullException(paramName: nameof(type));
-        }
-
-        private string ToStringImpl(int indent)
-        {
-            var sb = new StringBuilder();
-            var i = new string(' ', IndentSize * indent);
-            sb.AppendLine($"public {Type} {Value}");
-            sb.AppendLine("{");
-
-            foreach (var e in Elements)
+            
+            switch (system)
             {
-                sb.AppendLine($"{i} public {e.Type} {e.Value}");
+                case CoordinateSystem.Cartesian:
+                    x = a;
+                    y = b;
+                    break;
+                case CoordinateSystem.Polar:
+                    x = a * Math.Cos(b);
+                    y = a * Math.Sin(b);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(system), system, null);
             }
-
-            sb.AppendLine("}");
-            return sb.ToString();
         }
 
-        public override string ToString()
-        {
-            return ToStringImpl(0);
-        }
-    }
-
-    public class CodeBuilder
-    {
-        private readonly string className;
-        private CodeElement root = new CodeElement();
-
-        public CodeBuilder(string className)
-        {
-            this.className = className;
-            root.Value = className;
-            root.Type = "class";
-        }
-
-        public CodeBuilder AddField(string value, string type)
-        {
-            var e = new CodeElement(value, type);
-            root.Elements.Add(e);
-            return this;
-        }
-
-        public override string ToString()
-        {
-            return root.ToString();
-        }
-
-        public void Clear()
-        {
-            root = new CodeElement { Value = className };
-        }
-    }
-
-    class Program
+        class Program
     {
         static void Main(string[] args)
         {
-            var cb = new CodeBuilder("Person").AddField("Name", "string").AddField("Age", "int");
-            Console.WriteLine(cb);
-
             Console.ReadLine();
         }
+    }
     }
 }
