@@ -6,76 +6,85 @@ using System.Threading.Tasks;
 
 namespace DesignPatternsPractice
 {
-    public class HtmlElement
+    public class Person
     {
-        public string Name, Text;
-        public List<HtmlElement> Elements = new List<HtmlElement>();
-        private const int IndentSize = 2;
+        //address
+        public string StreetAddress, Postcode, Town;
 
-        public HtmlElement()
-        {
-            
-        }
-
-        public HtmlElement(string name, string text)
-        {
-            Name = name ?? throw new ArgumentNullException(paramName: nameof(name));
-            Text = text ?? throw new ArgumentNullException(paramName: nameof(text));
-        }
-
-        private string ToStringImpl(int indent)
-        {
-            var sb = new StringBuilder();
-            var i = new string(' ', IndentSize * indent);
-            sb.AppendLine($"{i}<{Name}>");
-
-            if (!string.IsNullOrWhiteSpace(Text))
-            {
-                sb.Append(new string(' ', IndentSize * (indent + 1)));
-                sb.AppendLine(Text);
-            }
-
-            foreach (var e in Elements)
-            {
-                sb.Append(e.ToStringImpl(indent + 1));
-            }
-
-            sb.AppendLine($"{i}</{Name}>");
-            return sb.ToString();
-        }
+        //employment
+        public string CompanyName, Position;
+        public int AnnualIncome;
 
         public override string ToString()
         {
-            return ToStringImpl(0);
+            return $"{nameof(StreetAddress)}: {StreetAddress}, {nameof(Postcode)}: {Postcode}, {nameof(Town)}: {Town}, {nameof(CompanyName)}: {CompanyName}, {nameof(Position)}: {Position}, {nameof(AnnualIncome)}: {AnnualIncome}";
         }
     }
 
-    public class HtmlBuilder
+    public class PersonBuilder // facade
     {
-        private readonly string rootName;
-        private HtmlElement root = new HtmlElement();
+        //reference!
+        protected Person person = new Person();
 
-        public HtmlBuilder(string rootName)
+        public PersonJobBuilder Works => new PersonJobBuilder(person);
+        public PersonAddressBuilder Lives => new PersonAddressBuilder(person);
+
+        public static implicit operator Person(PersonBuilder pb)
         {
-            this.rootName = rootName;
-            root.Name = rootName;
+            return pb.person;
+        }
+    }
+
+    public class PersonJobBuilder : PersonBuilder
+    {
+        //might not work with a value type!
+        public PersonJobBuilder(Person person)
+        {
+            this.person = person;
         }
 
-        public HtmlBuilder AddChild(string childName, string childText)
+        public PersonJobBuilder At(string companyName)
         {
-            var e = new HtmlElement(childName, childText);
-            root.Elements.Add(e);
+            person.CompanyName = companyName;
             return this;
         }
 
-        public override string ToString()
+        public PersonJobBuilder AsA(string position)
         {
-            return root.ToString();
+            person.Position = position;
+            return this;
         }
 
-        public void Clear()
+        public PersonJobBuilder Earning(int amount)
         {
-            root = new HtmlElement {Name = rootName};
+            person.AnnualIncome = amount;
+            return this;
+        }
+    }
+
+    public class PersonAddressBuilder : PersonBuilder
+    {
+        public PersonAddressBuilder(Person person)
+        {
+            this.person = person;
+        }
+
+        public PersonAddressBuilder At(string streetAdress)
+        {
+            person.StreetAddress = streetAdress;
+            return this;
+        }
+
+        public PersonAddressBuilder WithPostCode(string postcode)
+        {
+            person.Postcode = postcode;
+            return this;
+        }
+
+        public PersonAddressBuilder In(string town)
+        {
+            person.Town = town;
+            return this;
         }
     }
 
@@ -83,35 +92,16 @@ namespace DesignPatternsPractice
     {
         static void Main(string[] args)
         {
-            //Old method without Html Builder
-            Console.WriteLine("< !--Old method without Html Builder-- >");
-            Console.WriteLine("");
+            var pb = new PersonBuilder();
+            Person person = pb
+                .Lives.At("5769 Magnolia Dr.")
+                      .WithPostCode("L9ZH3H")
+                      .In("Saint Catherines")
+                .Works.At("McDonald's")
+                      .AsA("Cashier")
+                      .Earning(50000);
 
-            var hello = "hello";
-            var sb = new StringBuilder();
-            sb.Append("<p>");
-            sb.Append(hello);
-            sb.Append("</p>");
-            Console.WriteLine(sb);
-
-            var words = new[] { "Hello", "world" };
-            sb.Clear();
-            sb.Append("<ul>");
-            foreach (var word in words)
-            {
-                sb.AppendFormat("<li>{0}</li>", word);
-            }
-            sb.Append("</ul>");
-            Console.WriteLine(sb);
-            Console.WriteLine("");
-
-            //New method with the Html Builder
-            Console.WriteLine("< !--New method with the Html Builder-- >");
-            Console.WriteLine("");
-            var builder = new HtmlBuilder("ul");
-            builder.AddChild("li", "Hello").AddChild("li", "World");
-            Console.WriteLine(builder.ToString());
-
+            Console.WriteLine(person);
             Console.ReadLine();
         }
     }
