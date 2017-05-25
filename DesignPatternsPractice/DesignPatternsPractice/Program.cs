@@ -22,6 +22,14 @@ namespace DesignPatternsPractice
             return $"{nameof(x)}: {x}, {nameof(y)}: {y}";
         }
 
+        //Property
+        //creates new point
+        public static Point Origin => new Point(0, 0);
+
+        //Signleton field
+        //initializes static field once
+        public static Point Origin2 = new Point(0, 0); //better
+
         public class Factory
         {
             public static Point NewCartesianPoint(double x, double y)
@@ -43,6 +51,8 @@ namespace DesignPatternsPractice
             var point = Point.Factory.NewPolarPoint(1.0, Math.PI / 2);
             Console.WriteLine(point);
             Console.ReadLine();
+
+            var origin = Point.Origin;
         }
     }
 }
