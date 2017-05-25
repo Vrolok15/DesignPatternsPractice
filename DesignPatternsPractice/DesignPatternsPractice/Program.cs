@@ -1,90 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DesignPatternsPractice
 {
-    public class Person
+    public class CodeElement
     {
-        //address
-        public string StreetAddress, Postcode, Town;
+        public string Value;
+        public string Type;
+        public List<CodeElement> Elements = new List<CodeElement>();
+        private const int IndentSize = 2;
 
-        //employment
-        public string CompanyName, Position;
-        public int AnnualIncome;
+        public CodeElement()
+        {
+
+        }
+
+        public CodeElement(string value, string type)
+        {
+            Value = value ?? throw new ArgumentNullException(paramName: nameof(value));
+            Type = type ?? throw new ArgumentNullException(paramName: nameof(type));
+        }
+
+        private string ToStringImpl(int indent)
+        {
+            var sb = new StringBuilder();
+            var i = new string(' ', IndentSize * indent);
+            sb.AppendLine($"public {Type} {Value}");
+            sb.AppendLine("{");
+
+            foreach (var e in Elements)
+            {
+                sb.AppendLine($"{i} public {e.Type} {e.Value}");
+            }
+
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
 
         public override string ToString()
         {
-            return $"{nameof(StreetAddress)}: {StreetAddress}, {nameof(Postcode)}: {Postcode}, {nameof(Town)}: {Town}, {nameof(CompanyName)}: {CompanyName}, {nameof(Position)}: {Position}, {nameof(AnnualIncome)}: {AnnualIncome}";
+            return ToStringImpl(0);
         }
     }
 
-    public class PersonBuilder // facade
+    public class CodeBuilder
     {
-        //reference!
-        protected Person person = new Person();
+        private readonly string className;
+        private CodeElement root = new CodeElement();
 
-        public PersonJobBuilder Works => new PersonJobBuilder(person);
-        public PersonAddressBuilder Lives => new PersonAddressBuilder(person);
-
-        public static implicit operator Person(PersonBuilder pb)
+        public CodeBuilder(string className)
         {
-            return pb.person;
-        }
-    }
-
-    public class PersonJobBuilder : PersonBuilder
-    {
-        //might not work with a value type!
-        public PersonJobBuilder(Person person)
-        {
-            this.person = person;
+            this.className = className;
+            root.Value = className;
+            root.Type = "class";
         }
 
-        public PersonJobBuilder At(string companyName)
+        public CodeBuilder AddField(string value, string type)
         {
-            person.CompanyName = companyName;
+            var e = new CodeElement(value, type);
+            root.Elements.Add(e);
             return this;
         }
 
-        public PersonJobBuilder AsA(string position)
+        public override string ToString()
         {
-            person.Position = position;
-            return this;
+            return root.ToString();
         }
 
-        public PersonJobBuilder Earning(int amount)
+        public void Clear()
         {
-            person.AnnualIncome = amount;
-            return this;
-        }
-    }
-
-    public class PersonAddressBuilder : PersonBuilder
-    {
-        public PersonAddressBuilder(Person person)
-        {
-            this.person = person;
-        }
-
-        public PersonAddressBuilder At(string streetAdress)
-        {
-            person.StreetAddress = streetAdress;
-            return this;
-        }
-
-        public PersonAddressBuilder WithPostCode(string postcode)
-        {
-            person.Postcode = postcode;
-            return this;
-        }
-
-        public PersonAddressBuilder In(string town)
-        {
-            person.Town = town;
-            return this;
+            root = new CodeElement { Value = className };
         }
     }
 
@@ -92,16 +78,9 @@ namespace DesignPatternsPractice
     {
         static void Main(string[] args)
         {
-            var pb = new PersonBuilder();
-            Person person = pb
-                .Lives.At("5769 Magnolia Dr.")
-                      .WithPostCode("L9ZH3H")
-                      .In("Saint Catherines")
-                .Works.At("McDonald's")
-                      .AsA("Cashier")
-                      .Earning(50000);
+            var cb = new CodeBuilder("Person").AddField("Name", "string").AddField("Age", "int");
+            Console.WriteLine(cb);
 
-            Console.WriteLine(person);
             Console.ReadLine();
         }
     }
