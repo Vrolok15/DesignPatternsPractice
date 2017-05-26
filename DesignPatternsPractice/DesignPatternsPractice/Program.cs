@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DesignPatternsPractice
 {
-    public class Person : ICloneable
+    public class Person
     {
         public string[] Names;
         public Address Address;
@@ -15,10 +15,17 @@ namespace DesignPatternsPractice
             Address = address ?? throw new ArgumentNullException(paramName: nameof(address));
         }
 
-        // Returns only an object!
-        public object Clone()
+        public Person(Person other)
         {
-            return new Person(Names, (Address)Address.Clone());
+            Names = other.Names;
+            Address = new Address(other.Address);
+        }
+
+
+        public interface IInter
+        {
+            void Stop();
+            string Name { get; set; }
         }
 
         public override string ToString()
@@ -27,7 +34,7 @@ namespace DesignPatternsPractice
         }
     }
 
-    public class Address : ICloneable
+    public class Address
     {
         public string StreetName;
         public int HouseNumber;
@@ -38,10 +45,11 @@ namespace DesignPatternsPractice
             HouseNumber = houseNumber;
         }
 
-        // Need to clone the Address too!
-        public object Clone()
+        //keep parameter name the same
+        public Address(Address other)
         {
-            return new Address(StreetName, HouseNumber);
+            StreetName = other.StreetName;
+            HouseNumber = other.HouseNumber;
         }
 
         public override string ToString()
@@ -56,7 +64,7 @@ namespace DesignPatternsPractice
         {
             var john = new Person(new [] {"John", "Smith"}, 
                 new Address("Lundy's Lane", 1234));
-            var jane = (Person)john.Clone();
+            var jane = new Person(john);
 
             jane.Names = new[] {"Jane", "Black"};
             jane.Address.HouseNumber = 4321;
