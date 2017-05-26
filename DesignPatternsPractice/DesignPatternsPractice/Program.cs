@@ -4,7 +4,12 @@ using System.Text;
 
 namespace DesignPatternsPractice
 {
-    public class Person
+    public interface IPrototype<T>
+    {
+        T DeepCopy();
+    }
+
+    public class Person : IPrototype<Person>
     {
         public string[] Names;
         public Address Address;
@@ -32,9 +37,14 @@ namespace DesignPatternsPractice
         {
             return $"{nameof(Names)}: {string.Join(" ", Names)}, {nameof(Address)}: {Address}";
         }
+
+        public Person DeepCopy()
+        {
+            return new Person(Names, Address.DeepCopy());
+        }
     }
 
-    public class Address
+    public class Address : IPrototype<Address>
     {
         public string StreetName;
         public int HouseNumber;
@@ -56,6 +66,11 @@ namespace DesignPatternsPractice
         {
             return $"{nameof(StreetName)}: {StreetName}, {nameof(HouseNumber)}: {HouseNumber}";
         }
+
+        public Address DeepCopy()
+        {
+            return new Address(StreetName, HouseNumber);
+        }
     }
 
     class Program
@@ -64,7 +79,7 @@ namespace DesignPatternsPractice
         {
             var john = new Person(new [] {"John", "Smith"}, 
                 new Address("Lundy's Lane", 1234));
-            var jane = new Person(john);
+            var jane = john.DeepCopy();
 
             jane.Names = new[] {"Jane", "Black"};
             jane.Address.HouseNumber = 4321;
