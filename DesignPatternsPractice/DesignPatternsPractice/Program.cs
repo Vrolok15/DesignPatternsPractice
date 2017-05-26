@@ -1,15 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DesignPatternsPractice
 {
-    public interface IPrototype<T>
+
+    public static class ExtensionMethods
     {
-        T DeepCopy();
+        public static T DeepCopy<T>(this T self)
+        {
+            var stream = new MemoryStream();
+            var formatter = new BinaryFormatter();
+            formatter.Serialize(stream, self);
+            stream.Seek(0, SeekOrigin.Begin);
+            object copy = formatter.Deserialize(stream);
+            stream.Close();
+            return (T)copy;
+        }
     }
 
-    public class Person : IPrototype<Person>
+    [Serializable]
+    public class Person
     {
         public string[] Names;
         public Address Address;
@@ -19,13 +30,6 @@ namespace DesignPatternsPractice
             Names = names ?? throw new ArgumentNullException(paramName: nameof(names));
             Address = address ?? throw new ArgumentNullException(paramName: nameof(address));
         }
-
-        public Person(Person other)
-        {
-            Names = other.Names;
-            Address = new Address(other.Address);
-        }
-
 
         public interface IInter
         {
@@ -38,13 +42,10 @@ namespace DesignPatternsPractice
             return $"{nameof(Names)}: {string.Join(" ", Names)}, {nameof(Address)}: {Address}";
         }
 
-        public Person DeepCopy()
-        {
-            return new Person(Names, Address.DeepCopy());
-        }
     }
 
-    public class Address : IPrototype<Address>
+    [Serializable]
+    public class Address
     {
         public string StreetName;
         public int HouseNumber;
@@ -55,21 +56,9 @@ namespace DesignPatternsPractice
             HouseNumber = houseNumber;
         }
 
-        //keep parameter name the same
-        public Address(Address other)
-        {
-            StreetName = other.StreetName;
-            HouseNumber = other.HouseNumber;
-        }
-
         public override string ToString()
         {
             return $"{nameof(StreetName)}: {StreetName}, {nameof(HouseNumber)}: {HouseNumber}";
-        }
-
-        public Address DeepCopy()
-        {
-            return new Address(StreetName, HouseNumber);
         }
     }
 
@@ -79,8 +68,8 @@ namespace DesignPatternsPractice
         {
             var john = new Person(new [] {"John", "Smith"}, 
                 new Address("Lundy's Lane", 1234));
-            var jane = john.DeepCopy();
 
+            var jane = john.DeepCopy();
             jane.Names = new[] {"Jane", "Black"};
             jane.Address.HouseNumber = 4321;
 
