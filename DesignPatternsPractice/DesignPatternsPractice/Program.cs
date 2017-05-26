@@ -1,29 +1,38 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml.Serialization;
 
 namespace DesignPatternsPractice
 {
 
     public static class ExtensionMethods
     {
-        public static T DeepCopy<T>(this T self)
+
+        public static T DeepCopyXml<T>(this T self)
         {
-            var stream = new MemoryStream();
-            var formatter = new BinaryFormatter();
-            formatter.Serialize(stream, self);
-            stream.Seek(0, SeekOrigin.Begin);
-            object copy = formatter.Deserialize(stream);
-            stream.Close();
-            return (T)copy;
+            using (var ms = new MemoryStream())
+            {
+                var s = new XmlSerializer(typeof(T));
+                s.Serialize(ms, self);
+                //does same as stream.Seek(0, SeekOrigin.Begin);
+                ms.Position = 0;
+                return (T) s.Deserialize(ms);
+            }
+                
         }
     }
 
-    [Serializable]
     public class Person
     {
         public string[] Names;
         public Address Address;
+
+        //Need to have empty constructors to use XmlSerializer
+        public Person()
+        {
+            
+        }
 
         public Person(string[] names, Address address)
         {
@@ -44,11 +53,16 @@ namespace DesignPatternsPractice
 
     }
 
-    [Serializable]
     public class Address
     {
         public string StreetName;
         public int HouseNumber;
+
+        //Need to have empty constructors to use XmlSerializer
+        public Address()
+        {
+            
+        }
 
         public Address(string streetName, int houseNumber)
         {
@@ -69,7 +83,7 @@ namespace DesignPatternsPractice
             var john = new Person(new [] {"John", "Smith"}, 
                 new Address("Lundy's Lane", 1234));
 
-            var jane = john.DeepCopy();
+            var jane = john.DeepCopyXml();
             jane.Names = new[] {"Jane", "Black"};
             jane.Address.HouseNumber = 4321;
 
