@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
 using MoreLinq;
+using NUnit.Framework;
 
 namespace DesignPatternsPractice
 {
@@ -19,12 +20,15 @@ namespace DesignPatternsPractice
     public class SingletonDatabase : IDatabase
     {
         private Dictionary<string, int> capitals;
+        private static int instanceCount; //0
+        public static int Count => instanceCount;
 
         private SingletonDatabase()
         {
+            instanceCount++;
             Console.WriteLine("Initializing Database");
             // Read lines from a file to simulate Database access
-            capitals = File.ReadAllLines("capitals.txt")
+            capitals = File.ReadAllLines("C:\\Кабинет\\VS\\DesignPatternsPractice\\DesignPatternsPractice\\DesignPatternsPractice\\capitals.txt")
                 // Group lines by 2
                 .Batch(2)
                 // Transform them to dictionary entries
@@ -45,6 +49,42 @@ namespace DesignPatternsPractice
         private static Lazy<SingletonDatabase> instance = new Lazy<SingletonDatabase>(() => new SingletonDatabase());
 
         public static SingletonDatabase Instance => instance.Value;
+    }
+
+    public class SingletonRecordFinder
+    {
+        public int GetTotalPopulation(IEnumerable<String> names)
+        {
+            var result = 0;
+            foreach (var name in names)
+            {
+                result += SingletonDatabase.Instance.GetPopulation(name);
+            }
+            return result;
+        }
+    }
+
+    [TestFixture]
+    public class SingletonTests
+    {
+        [Test]
+        public void IsSingletonTest()
+        {
+            var db = SingletonDatabase.Instance;
+            var db2 = SingletonDatabase.Instance;
+            Assert.That(db, Is.SameAs(db2));
+            Assert.That(SingletonDatabase.Count, Is.EqualTo(1));
+        }
+
+        //Dependant on a real database! Bad!
+        [Test]
+        public void SingletonTotalPopulationTest()
+        {
+            var rf = new SingletonRecordFinder();
+            var names = new[] {"Seoul", "Mexico City"};
+            int tp = rf.GetTotalPopulation(names);
+            Assert.That(tp, Is.EqualTo(17500000 + 17400000));
+        }
     }
 
     class Program
