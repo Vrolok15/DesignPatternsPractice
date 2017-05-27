@@ -1,43 +1,106 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using MoreLinq;
 
 namespace DesignPatternsPractice
 {
-    //Can only be one! But making it static - not a great idea...
-    public class CEO
+    public class Point
     {
-        //Make these static!
-        private static string name;
-        private static int age;
+        public int X, Y;
 
-        public string Name
+        public Point(int x, int y)
         {
-            get => name;
-            set => name = value;
+            X = x;
+            Y = y;
         }
+    }
 
-        public int Age
+    public class Line
+    {
+        public Point Start, End;
+
+        public Line(Point start, Point end)
         {
-            get => age;
-            set => age = value;
+            Start = start ?? throw new ArgumentNullException(nameof(start));
+            End = end ?? throw new ArgumentNullException(nameof(end));
         }
+    }
 
-        public override string ToString()
+    public class VectorObject : Collection<Line>
+    {
+        
+    }
+
+    public class VectorRectangle : VectorObject
+    {
+        public VectorRectangle(int x, int y, int width, int height)
         {
-            return $"{nameof(Name)}: {Name}, {nameof(Age)}: {Age}";
+            Add(new Line(new Point(x, y), new Point(x + width, y)));
+            Add(new Line(new Point(x + width, y), new Point(x + width, y + height)));
+            Add(new Line(new Point(x, y), new Point(x, y + height)));
+            Add(new Line(new Point(x, y + height), new Point(x + width, y + height)));
+        }
+    }
+
+    //ADAPTER
+    public class LineToPointAdapter : Collection<Point>
+    {
+        private static int count;
+
+        public LineToPointAdapter(Line line)
+        {
+            Console.WriteLine($"{++count}: Generating points for line [{line.Start.X},{line.Start.Y}]-[{line.End.X},{line.End.Y}]");
+
+            int left = Math.Min(line.Start.X, line.End.X);
+            int right = Math.Max(line.Start.X, line.End.X);
+            int top = Math.Min(line.Start.Y, line.End.Y);
+            int bottom = Math.Max(line.Start.Y, line.End.Y);
+            int dx = right - left;
+            int dy = line.End.Y - line.Start.Y;
+
+            if (dx == 0)
+            {
+                for (int y = top; y <= bottom; ++y)
+                {
+                    Add(new Point(left, y));
+                }
+            }
+            else if (dy == 0)
+            {
+                for (int x = left; x <= right; ++x)
+                {
+                    Add(new Point(x, top));
+                }
+            }
         }
     }
 
     class Program
     {
+        private static readonly List<VectorObject> vectorObjects
+            = new List<VectorObject>
+            {
+                new VectorRectangle(1, 1, 10, 15),
+                new VectorRectangle(3, 3, 6, 12)
+            };
+
+        public static void DrawPoint(Point point)
+        {
+            Console.Write(".");
+        }
+
         static void Main(string[] args)
         {
-            var ceo = new CEO();
-            ceo.Name = "August C.";
-            ceo.Age = 33;
+            foreach (var vo in vectorObjects)
+            {
+                foreach (var line in vo)
+                {
+                    var adapter = new LineToPointAdapter(line);
+                    adapter.ForEach(DrawPoint);
+                }
+            }
 
-            var ceo2 = new CEO();
-            //Still refers to the same fields
-            Console.WriteLine(ceo2);
             Console.ReadLine();
         }
     }
